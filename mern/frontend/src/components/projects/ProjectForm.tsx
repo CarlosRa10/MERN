@@ -31,13 +31,13 @@ export default function ProjectForm({errors, register} : ProjectFormProps) {
 
             <div className="mb-5 space-y-3">
                 <label htmlFor="clientName" className="text-sm uppercase font-bold">
-                    Nombre Cliente
+                    Beneficiario
                 </label>
                 <input
                     id="clientName"
                     className="w-full p-3  border border-gray-200"
                     type="text"
-                    placeholder="Nombre del Cliente"
+                    placeholder="Beneficiario"
                     {...register("clientName", {
                         required: "El Nombre del Cliente es obligatorio",
                     })}

@@ -71,44 +71,51 @@ export class AuthController {
 
     static login = async (req: Request, res: Response) => {
         try {
-            const { email, password } = req.body
-            const user = await User.findOne({ email })
+            const { email, password } = req.body;
+            console.log('Intentando login con:', { email, password });
+    
+            const user = await User.findOne({ email });
+            console.log('Usuario encontrado:', user);
+    
             if (!user) {
-                const error = new Error('Usuario no encontrado')
-                res.status(404).json({ error: error.message })
+                const error = new Error('Usuario no encontrado');
+                res.status(404).json({ error: error.message });
+                return
             }
-
+    
             if (!user.confirmed) {
-                const token = new Token()
-                token.user = user.id
-                token.token = generateToken()
-                await token.save()
-
-                // enviar el email
+                const token = new Token();
+                token.user = user.id;
+                token.token = generateToken();
+                await token.save();
+    
                 AuthEmail.sendConfirmationEmail({
                     email: user.email,
                     name: user.name,
                     token: token.token
-                })
-
-                const error = new Error('La cuenta no ha sido confirmada, hemos enviado un e-mail de confirmación')
-                res.status(401).json({ error: error.message })
+                });
+    
+                const error = new Error('La cuenta no ha sido confirmada, hemos enviado un e-mail de confirmación');
+                return res.status(401).json({ error: error.message });
             }
-
-            // Revisar password
-            const isPasswordCorrect = await checkPassword(password, user.password)
-            if(!isPasswordCorrect) {
-                const error = new Error('Password Incorrecto')
-                res.status(401).json({ error: error.message })
+    
+            const isPasswordCorrect = await checkPassword(password, user.password);
+            console.log('¿Contraseña correcta?', isPasswordCorrect);
+    
+            if (!isPasswordCorrect) {
+                const error = new Error('Password Incorrecto');
+                res.status(401).json({ error: error.message });
                 return
             }
-
-            const token = generateJWT({id: user._id})
-
-            res.send(token)
-
+    
+            const token = generateJWT({ id: user._id });
+            console.log('Token JWT generado:', token);
+    
+            res.send(token);
+            return
         } catch (error) {
-            res.status(500).json({ error: 'Hubo un error' })
+            console.error('Error en login:', error);
+            res.status(500).json({ error: 'Hubo un error' });
             return
         }
     }
@@ -229,7 +236,8 @@ export class AuthController {
         const userExists = await User.findOne({email})
         if(userExists && userExists.id.toString() !== req.user.id.toString() ) {
             const error = new Error('Ese email ya esta registrado')
-            return res.status(409).json({error: error.message})
+            res.status(409).json({error: error.message})
+            return
         }
 
         req.user.name = name
@@ -251,7 +259,8 @@ export class AuthController {
         const isPasswordCorrect = await checkPassword(current_password, user.password)
         if(!isPasswordCorrect) {
             const error = new Error('El Password actual es incorrecto')
-            return res.status(401).json({error: error.message})
+            res.status(401).json({error: error.message})
+            return
         }
 
         try {
@@ -271,7 +280,8 @@ export class AuthController {
         const isPasswordCorrect = await checkPassword(password, user.password)
         if(!isPasswordCorrect) {
             const error = new Error('El Password es incorrecto')
-            return res.status(401).json({error: error.message})
+            res.status(401).json({error: error.message})
+            return
         }
 
         res.send('Password Correcto')
